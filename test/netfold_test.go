@@ -59,15 +59,19 @@ func Test_complete(t *testing.T) {
 	require.EqualValues(t, targetSubnets, consolidated)
 }
 
-func Test_IsSubset(t *testing.T) {
+func Test_NetsParsing(t *testing.T) {
 	sourceSubnets := []string{
 		"1011:4d2::/256",
 		"1011:4d2::",
 		"1011:4d2:0",
 		"",
 		"VRED&^ &F!*O&HPU",
+		"123.123.123.123",
+		"1123123123",
 	}
-	nets := netconsolidator.Parsecidr(sourceSubnets)
+	nets, netsWithError := netconsolidator.Parsecidr(sourceSubnets)
 
+	require.NotEmpty(t, netsWithError)
+	require.EqualValues(t, sourceSubnets, netsWithError)
 	require.Empty(t, nets)
 }

@@ -12,23 +12,20 @@ func isSubset(subnet1 *net.IPNet, subnet2 *net.IPNet) bool {
 	return subnet2.Contains(subnet1.IP) && subnet2.Mask.String() <= subnet1.Mask.String()
 }
 
-func Parsecidr(subnets []string) []*net.IPNet {
+func Parsecidr(subnets []string) ([]*net.IPNet, []string) {
 	var nets []*net.IPNet
-	var isErrors = false
+	var netsWithErrors []string
 
 	for _, s := range subnets {
 		_, subnet, err := net.ParseCIDR(s)
 		if err != nil {
-			fmt.Printf("Can't parse subnet: %v\n", err)
-			isErrors = true
+			netsWithErrors = append(netsWithErrors, s)
 			continue
 		}
 		nets = append(nets, subnet)
 	}
-	if isErrors {
-		return nil
-	}
-	return nets
+
+	return nets, netsWithErrors
 }
 
 func ConsolidateSubnets(nets []*net.IPNet) []string {
@@ -51,7 +48,12 @@ func ConsolidateSubnets(nets []*net.IPNet) []string {
 }
 
 func Consolidate(subnets []string) []string {
-	nets := Parsecidr(subnets)
+	nets, netsWithErrors := Parsecidr(subnets)
+	if len(netsWithErrors) > 0 {
+		for s := range netsWithErrors {
+			fmt.Fprintf(os.Stderr, "invalid CIDR address: %s\n", s)
+		}
+	}
 	consolidated := ConsolidateSubnets(nets)
 	return consolidated
 }
